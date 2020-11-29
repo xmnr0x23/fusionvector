@@ -1,0 +1,236 @@
+-- ============================================================================
+-- modules
+-- ============================================================================
+local matrixutils = self and require("matrixutils") or nil
+local json = self and require("dkjson") or nil
+local matrix = self and require( "matrix" ) or nil
+
+-- ============================================================================
+-- constants
+-- ============================================================================
+FUSE_NAME = "VectorCreate"
+DATATYPE = "Text"
+
+-- ============================================================================
+-- fuse
+-- ============================================================================
+FuRegisterClass(FUSE_NAME, CT_Tool, {
+    REGID_DataType = DATATYPE,
+    REGID_InputDataType = DATATYPE,
+    REG_NoCommonCtrls = true,
+    REGS_Category = "Vonk\\Vector",
+    REGS_Name = FUSE_NAME,
+    REGS_OpDescription = "Creates a vector from an array.",
+    REGS_OpIconString = FUSE_NAME
+})
+
+function Create()
+    -- [[ Creates the user interface. ]]
+    -- InProcessX = self:AddInput(
+        -- "X",
+        -- "ProcessX",
+        -- {
+            -- ICD_Width = 0.25,
+            -- INPID_InputControl = "CheckboxControl",
+            -- INP_Default = 1.0,
+            -- INP_DoNotifyChanged = true,
+            -- INP_External = false,
+            -- INP_Integer = true,
+            -- LINKID_DataType = "Number"
+        -- }
+    -- )
+    
+    -- InProcessY = self:AddInput(
+        -- "Y",
+        -- "ProcessY",
+        -- {
+            -- ICD_Width = 0.25,
+            -- INPID_InputControl = "CheckboxControl",
+            -- INP_Default = 1.0,
+            -- INP_DoNotifyChanged = true,
+            -- INP_External = false,
+            -- INP_Integer = true,
+            -- LINKID_DataType = "Number"
+        -- }
+    -- )
+
+    -- InProcessZ = self:AddInput(
+        -- "Z",
+        -- "ProcessZ",
+        -- {
+            -- ICD_Width = 0.25,
+            -- INPID_InputControl = "CheckboxControl",
+            -- INP_Default = 1.0,
+            -- INP_DoNotifyChanged = true,
+            -- INP_External = false,
+            -- INP_Integer = true,
+            -- LINKID_DataType = "Number"
+        -- }
+    -- )
+    
+    -- InProcessW = self:AddInput(
+        -- "W",
+        -- "ProcessW",
+        -- {
+            -- ICD_Width = 0.25,
+            -- INPID_InputControl = "CheckboxControl",
+            -- INP_Default = 1.0,
+            -- INP_DoNotifyChanged = true,
+            -- INP_External = false,
+            -- INP_Integer = true,
+            -- LINKID_DataType = "Number"
+        -- }
+    -- )
+    
+    InElements = self:AddInput(
+        "Elements",
+        "Elements",
+        {
+            INPID_InputControl = "SliderControl",
+            INP_Default = 3,
+            INP_Integer = true,
+            INP_MaxAllowed = 4,
+            INP_MaxScale = 4,
+            INP_MinAllowed = 2,
+            INP_MinScale = 2,
+            LINKID_DataType = "Number",
+            LINK_Main = 5,
+            LINK_Visible = false,
+            INP_DoNotifyChanged = true
+        }
+    )
+
+    self:BeginControlNest( "Vector" , "Vector" , true , { LBLC_PickButton = false } )
+    
+        InElementX = self:AddInput(
+            "X",
+            "X",
+            {
+                INPID_InputControl = "SliderControl",
+                INP_Default = 0,
+                INP_Integer = false,
+                INP_MaxScale = 100,
+                INP_MinScale = 0,
+                LINKID_DataType = "Number",
+                LINK_Main = 1,
+                LINK_Visible = false
+            }
+        )
+
+        InElementY = self:AddInput(
+            "Y",
+            "Y",
+            {
+                INPID_InputControl = "SliderControl",
+                INP_Default = 0,
+                INP_Integer = false,
+                INP_MaxScale = 100,
+                INP_MinScale = 0,
+                LINKID_DataType = "Number",
+                LINK_Main = 2,
+                LINK_Visible = false
+            }
+        )
+
+        InElementZ = self:AddInput(
+            "Z",
+            "Z",
+            {
+                INPID_InputControl = "SliderControl",
+                INP_Default = 0,
+                INP_Integer = false,
+                INP_MaxScale = 100,
+                INP_MinScale = 0,
+                LINKID_DataType = "Number",
+                LINK_Main = 3,
+                LINK_Visible = false,
+                IC_Visible = true,
+            }
+        )
+
+        InElementW = self:AddInput(
+            "W",
+            "W",
+            {
+                INPID_InputControl = "SliderControl",
+                INP_Default = 0,
+                INP_Integer = false,
+                INP_MaxScale = 100,
+                INP_MinScale = 0,
+                LINKID_DataType = "Number",
+                LINK_Main = 4,
+                LINK_Visible = false,
+                IC_Visible = false,
+            }
+        )
+
+    self:EndControlNest()
+    
+    InShowInput = self:AddInput("Show Input", "ShowInput", {
+        LINKID_DataType = "Number",
+        INPID_InputControl = "CheckboxControl",
+        INP_Integer = true,
+        INP_Default = 1.0,
+        INP_External = false,
+        INP_DoNotifyChanged = true
+    })
+
+    OutVector = self:AddOutput("Output", "Output", {
+        LINKID_DataType = "Text",
+        INPID_InputControl = "TextEditControl",
+        LINK_Main = 1
+    })
+end
+
+function NotifyChanged(inp, param, time)
+    --[[
+        Handles all input control events.
+
+        :param inp: Input that triggered a signal.
+        :type inp: Input
+
+        :param param: Parameter object holding the (new) value.
+        :type param: Parameter
+
+        :param time: Current frame number.
+        :type time: float
+    ]]
+    if inp == InShowInput then
+        local visible
+        if param.Value == 1.0 then visible = true else visible = false end
+        InElementX:SetAttrs({LINK_Visible = visible})
+        InElementY:SetAttrs({LINK_Visible = visible})
+        InElementZ:SetAttrs({LINK_Visible = visible})
+        InElementW:SetAttrs({LINK_Visible = visible})
+    end
+    if inp == InElements then
+        if param.Value == 2.0 then
+            InElementZ:SetAttrs({IC_Visible = false})
+            InElementW:SetAttrs({IC_Visible = false})
+        elseif param.Value == 3.0 then
+            InElementZ:SetAttrs({IC_Visible = true})
+            InElementW:SetAttrs({IC_Visible = false})
+        elseif param.Value == 4.0 then
+            InElementZ:SetAttrs({IC_Visible = true})
+            InElementW:SetAttrs({IC_Visible = true})
+        end
+    end
+end
+
+function Process(req)
+    -- [[ Creates the output. ]]
+    local elements = InElements:GetValue( req ).Value
+    local element_x = InElementX:GetValue( req ).Value
+    local element_y = InElementY:GetValue( req ).Value
+    local element_z = InElementZ:GetValue( req ).Value
+    local element_w = InElementW:GetValue( req ).Value
+
+    -- build vector from input controls
+    local vec = matrix{{element_x, element_y, element_z, element_w}}
+    local vec_sliced = matrix.subm(vec, 1, 1, 1, elements)
+    -- build interchangeable vector string format
+    local vec_str = matrixutils.matrix_to_string(vec_sliced)
+    local out = Text(vec_str)
+
+    OutVector:Set(req, out)
+end
